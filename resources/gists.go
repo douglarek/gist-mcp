@@ -37,7 +37,7 @@ L:
 		s.AddResource(
 			mcp.NewResource(
 				RESOURCE_PREFIX+gist.GetID(),
-				gist.GetDescription(), // TODO: maybe empty if no description
+				detectGistDescription(gist),
 				mcp.WithMIMEType("application/json"),
 			),
 			handleReadGistResource(gh),
@@ -46,6 +46,23 @@ L:
 		maxGists--
 	}
 	return nil
+}
+
+func detectGistDescription(gist *github.Gist) (desc string) {
+	if gist.GetDescription() != "" {
+		return gist.GetDescription()
+	}
+
+	var filenames []string
+	for filename := range gist.Files {
+		filenames = append(filenames, string(filename))
+	}
+	sort.Strings(filenames)
+
+	if len(filenames) > 0 {
+		return filenames[0] // use the first filename as description if no description is provided
+	}
+	return ""
 }
 
 func listGists(ctx context.Context, gh *github.Client) ([]*github.Gist, error) {
@@ -73,7 +90,7 @@ func listGists(ctx context.Context, gh *github.Client) ([]*github.Gist, error) {
 	}
 
 	sort.Slice(allGists, func(i, j int) bool {
-		return allGists[i].UpdatedAt.Time.After(allGists[j].UpdatedAt.Time) // descending order by updated time
+		return allGists[i].CreatedAt.Time.After(allGists[j].CreatedAt.Time) // descending order by created time
 	})
 
 	return allGists, nil
