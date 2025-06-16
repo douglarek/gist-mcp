@@ -89,9 +89,10 @@ func listGists(ctx context.Context, gh *github.Client) ([]*github.Gist, error) {
 		opt.ListOptions.Page = resp.NextPage
 	}
 
-	sort.Slice(allGists, func(i, j int) bool {
-		return allGists[i].CreatedAt.Time.After(allGists[j].CreatedAt.Time) // descending order by created time
-	})
+	// List public gists sorted by most recently updated to least recently updated.
+	// sort.Slice(allGists, func(i, j int) bool {
+	// 	return allGists[i].CreatedAt.Time.After(allGists[j].CreatedAt.Time) // descending order by created time
+	// })
 
 	return allGists, nil
 }
