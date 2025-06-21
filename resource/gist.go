@@ -1,4 +1,4 @@
-package resources
+package resource
 
 import (
 	"context"
@@ -13,10 +13,10 @@ import (
 
 const RESOURCE_PREFIX = "gist://"
 
-func RegisterGistResources(s *server.MCPServer, gh *github.Client) error {
+func MustNewGistServerResources(gh *github.Client) (srs []server.ServerResource) {
 	gists, err := listGists(context.Background(), gh) // maybe use a context with timeout
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	// keep only the most recent 50 gists
@@ -34,18 +34,19 @@ L:
 		}
 
 		slog.Debug("gist info", "url", gist.GetHTMLURL(), "description", gist.GetDescription(), "updated_at", gist.GetUpdatedAt().String())
-		s.AddResource(
-			mcp.NewResource(
+		srs = append(srs, server.ServerResource{
+			Resource: mcp.NewResource(
 				RESOURCE_PREFIX+gist.GetID(),
 				detectGistDescription(gist),
-				mcp.WithMIMEType("application/json"),
+				mcp.WithMIMEType("text/plain"),
 			),
-			handleReadGistResource(gh),
-		)
+			Handler: handleReadGistResource(gh),
+		})
 
 		maxGists--
 	}
-	return nil
+
+	return
 }
 
 func detectGistDescription(gist *github.Gist) (desc string) {
@@ -62,7 +63,7 @@ func detectGistDescription(gist *github.Gist) (desc string) {
 	if len(filenames) > 0 {
 		return filenames[0] // use the first filename as description if no description is provided
 	}
-	return ""
+	return
 }
 
 func listGists(ctx context.Context, gh *github.Client) ([]*github.Gist, error) {
@@ -114,7 +115,7 @@ func handleReadGistResource(gh *github.Client) func(ctx context.Context, request
 		return []mcp.ResourceContents{
 			mcp.TextResourceContents{
 				URI:      request.Params.URI,
-				MIMEType: "application/json",
+				MIMEType: "text/plain",
 				Text:     strings.TrimSuffix(sb.String(), "\n\n"),
 			},
 		}, nil

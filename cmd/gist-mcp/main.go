@@ -5,7 +5,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/douglarek/gist-mcp/resources"
+	"github.com/douglarek/gist-mcp/prompt"
+	"github.com/douglarek/gist-mcp/resource"
 	"github.com/google/go-github/v72/github"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -41,11 +42,11 @@ func main() {
 		slog.Error("GITHUB_TOKEN environment variable is required")
 		return
 	}
-	gh := github.NewClient(nil).WithAuthToken(githubToken)
-	if err := resources.RegisterGistResources(s, gh); err != nil {
-		slog.Error("Failed to register Gist resources", "error", err)
-		return
-	}
+
+	srs := resource.MustNewGistServerResources(github.NewClient(nil).WithAuthToken(githubToken))
+	s.AddResources(srs...)
+
+	s.AddPrompt(prompt.NewGistSummaryPrompt(), prompt.HandleGistSummaryPrompt)
 
 	if err := server.ServeStdio(s); err != nil {
 		slog.Error("Failed to start MCP server", "error", err)
