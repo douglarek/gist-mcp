@@ -13,7 +13,7 @@ import (
 
 const RESOURCE_PREFIX = "gist://"
 
-func MustNewGistServerResources(gh *github.Client) (srs []server.ServerResource) {
+func MustListGistResources(gh *github.Client) (srs []server.ServerResource) {
 	gists, err := listGists(context.Background(), gh) // maybe use a context with timeout
 	if err != nil {
 		panic(err)

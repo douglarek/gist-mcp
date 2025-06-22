@@ -43,10 +43,8 @@ func main() {
 		return
 	}
 
-	srs := resource.MustNewGistServerResources(github.NewClient(nil).WithAuthToken(githubToken))
-	s.AddResources(srs...)
-
-	s.AddPrompt(prompt.NewGistSummaryPrompt(), prompt.HandleGistSummaryPrompt)
+	s.AddResources(resource.MustListGistResources(github.NewClient(nil).WithAuthToken(githubToken))...)
+	s.AddPrompt(prompt.SummarizeGistPrompt())
 
 	if err := server.ServeStdio(s); err != nil {
 		slog.Error("Failed to start MCP server", "error", err)
